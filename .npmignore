@@ -1,0 +1,14 @@
+src/
+tests/
+scripts/
+docs/
+.github/
+.agents/
+.changeset/
+tsconfig.json
+lefthook.yml
+.prettierrc*
+.eslintrc*
+.node-version
+.nvmrc
+*.log
