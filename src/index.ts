@@ -6,3 +6,4 @@ export * from './client.js';
 export * from './indexer.js';
 export * from './attester.js';
 export * from './logger.js';
+export * from './config.js';

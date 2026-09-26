@@ -29,14 +29,17 @@
     "lint": "gts check",
     "fix": "gts fix",
     "format": "prettier --write .",
+    "test": "vitest run",
     "prepare": "lefthook install"
   },
   "devDependencies": {
     "@types/node": "^26.6.1",
+    "eslint": "^10.11.0",
     "gts": "^7.0.0",
     "lefthook": "^2.1.14",
     "prettier": "^3.9.7",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.2"
   },
   "packageManager": "pnpm@10.28.0",
   "publishConfig": {
@@ -45,6 +48,7 @@
   },
   "dependencies": {
     "gray-matter": "^4.0.3",
+    "jiti": "^2.7.0",
     "zod": "^4.6.5"
   }
 }
