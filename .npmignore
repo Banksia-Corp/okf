@@ -6,6 +6,7 @@ docs/
 .agents/
 .changeset/
 tsconfig.json
+tsconfig.build.json
 lefthook.yml
 .prettierrc*
 .eslintrc*

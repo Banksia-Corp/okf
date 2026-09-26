@@ -5,18 +5,18 @@
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
-  "types": "./dist/src/index.d.ts",
+  "types": "./dist/index.d.ts",
   "bin": {
     "okf": "./bin/okf.js"
   },
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
     "./node": {
-      "types": "./dist/src/node/index.d.ts",
+      "types": "./dist/node/index.d.ts",
       "import": "./dist/node/index.js",
       "require": "./dist/node/index.cjs"
     }
@@ -26,18 +26,26 @@
     "bin"
   ],
   "scripts": {
+    "build": "rslib build && tsx scripts/generate-schemas.ts && node scripts/check-distribution.mjs",
+    "build:bundle": "rslib build",
+    "build:schemas": "tsx scripts/generate-schemas.ts",
+    "check:dist": "node scripts/check-distribution.mjs",
+    "dev": "rslib build --watch",
     "lint": "gts check",
     "fix": "gts fix",
     "format": "prettier --write .",
     "test": "vitest run",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "okf": "tsx bin/okf.ts"
   },
   "devDependencies": {
+    "@rslib/core": "^1.0.2",
     "@types/node": "^26.6.1",
     "eslint": "^10.11.0",
     "gts": "^7.0.0",
     "lefthook": "^2.1.14",
     "prettier": "^3.9.7",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vitest": "^5.0.2"
   },
