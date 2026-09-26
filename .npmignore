@@ -5,11 +5,8 @@ docs/
 .github/
 .agents/
 .changeset/
-dist/tests/
-dist/bin/
-dist/*.test.d.ts
-dist/vitest.config.d.ts
 tsconfig.json
+tsconfig.build.json
 lefthook.yml
 .prettierrc*
 .eslintrc*

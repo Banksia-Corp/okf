@@ -16,8 +16,8 @@ describe('Distribution and Artifact Verification', () => {
       'dist/node/index.cjs',
       'dist/okf.schema.json',
       'dist/okf-frontmatter.schema.json',
-      'dist/src/index.d.ts',
-      'dist/src/node/index.d.ts',
+      'dist/index.d.ts',
+      'dist/node/index.d.ts',
     ];
 
     for (const relPath of required) {

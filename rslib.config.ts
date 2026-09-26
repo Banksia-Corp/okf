@@ -11,6 +11,7 @@ export default defineConfig({
           index: './src/index.ts',
           'node/index': './src/node/index.ts',
         },
+        tsconfigPath: './tsconfig.build.json',
       },
     },
     {
