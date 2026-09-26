@@ -253,7 +253,16 @@ async function handleAttest(
 ): Promise<number> {
   let content: string;
   try {
-    content = await resolvedConfig.repository.readConcept(targetPath);
+    const isFs =
+      'baseDir' in resolvedConfig.repository &&
+      typeof (resolvedConfig.repository as { baseDir: string }).baseDir ===
+        'string';
+
+    if (isFs) {
+      content = await fs.readFile(targetPath, 'utf8');
+    } else {
+      content = await resolvedConfig.repository.readConcept(targetPath);
+    }
   } catch {
     console.error(`Error: File does not exist: ${targetPath}`);
     return 1;

@@ -7,17 +7,16 @@ export const ActorSchema = z
     'Actor must follow <role>/<version>, human:<id>, or process:<id>'
   );
 
-export const IsoDateTimeSchema = z
-  .string()
-  .datetime({ offset: true })
-  .or(
-    z
-      .string()
-      .regex(
-        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/,
-        'Invalid ISO-8601 timestamp'
-      )
-  );
+export const IsoDateTimeSchema = z.union([
+  z.string().datetime({ offset: true }),
+  z
+    .string()
+    .regex(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/,
+      'Invalid ISO-8601 timestamp'
+    ),
+  z.date().transform((d) => d.toISOString()),
+]);
 
 export const DateOnlySchema = z
   .string()
