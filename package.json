@@ -26,18 +26,26 @@
     "bin"
   ],
   "scripts": {
+    "build": "rslib build && tsx scripts/generate-schemas.ts && node -e \"fs.rmSync('dist/tests', { recursive: true, force: true }); fs.rmSync('dist/bin', { recursive: true, force: true }); try { fs.unlinkSync('dist/vitest.config.d.ts'); } catch {}\" && node scripts/check-distribution.mjs",
+    "build:bundle": "rslib build && node -e \"fs.rmSync('dist/tests', { recursive: true, force: true }); fs.rmSync('dist/bin', { recursive: true, force: true }); try { fs.unlinkSync('dist/vitest.config.d.ts'); } catch {}\"",
+    "build:schemas": "tsx scripts/generate-schemas.ts",
+    "check:dist": "node scripts/check-distribution.mjs",
+    "dev": "rslib build --watch",
     "lint": "gts check",
     "fix": "gts fix",
     "format": "prettier --write .",
     "test": "vitest run",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "okf": "tsx bin/okf.ts"
   },
   "devDependencies": {
+    "@rslib/core": "^1.0.2",
     "@types/node": "^26.6.1",
     "eslint": "^10.11.0",
     "gts": "^7.0.0",
     "lefthook": "^2.1.14",
     "prettier": "^3.9.7",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vitest": "^5.0.2"
   },
