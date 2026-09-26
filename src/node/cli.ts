@@ -2,11 +2,10 @@ import { parseArgs } from 'node:util';
 import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
 import path from 'node:path';
-import { FileSystemRepository } from './fs-repository.js';
 import { Client } from '../client.js';
 import { writeDirectoryIndex } from './index.js';
 import { evaluateAttestedComputation } from '../attester.js';
-import { parseConceptContent } from '../parser.js';
+import { loadConfig, ResolvedOKFConfig } from './config-loader.js';
 
 function resolvePathFallback(targetPath: string): string {
   if (fsSync.existsSync(targetPath)) {
@@ -35,69 +34,75 @@ export function printHelp(): void {
 Open Knowledge Format (OKF v0.2) CLI
 
 Usage:
-  okf validate <path>       Validate OKF frontmatter schema in a file or directory
-  okf index <dir>           Generate or update directory index.md
+  okf validate [path]       Validate OKF frontmatter schema in a file or directory
+  okf index [dir]           Generate or update directory index.md
   okf attest <file>         Evaluate Attested Computation concept
-  okf graph <dir> [--json]  Generate and display knowledge graph
+  okf graph [dir] [--json]  Generate and display knowledge graph
+  okf --config, -c <path>   Path to configuration file
   okf --help, -h            Show this help message
 `);
 }
 
-async function handleValidate(targetPath: string): Promise<number> {
-  let stat;
-  try {
-    stat = await fs.stat(targetPath);
-  } catch {
-    console.error(`Error: Path does not exist: ${targetPath}`);
-    return 1;
-  }
+async function handleValidate(
+  targetPath: string,
+  resolvedConfig: ResolvedOKFConfig
+): Promise<number> {
+  const repo = resolvedConfig.repository;
+  const parser = resolvedConfig.parser;
 
-  if (stat.isFile()) {
-    const content = await fs.readFile(targetPath, 'utf8');
-    const res = parseConceptContent(content, targetPath);
-    if (res.valid) {
-      console.log(`[VALID] ${targetPath}`);
-      return 0;
-    } else {
-      console.error(
-        `[INVALID] ${targetPath}: ${res.errors?.join(', ') || 'Unknown validation error'}`
-      );
+  // If repo is not a FileSystemRepository (e.g. InMemoryRepository or mock), use repo directly
+  const isFs =
+    'baseDir' in repo &&
+    typeof (repo as { baseDir: string }).baseDir === 'string';
+
+  if (isFs) {
+    let stat;
+    try {
+      stat = await fs.stat(targetPath);
+    } catch {
+      console.error(`Error: Path does not exist: ${targetPath}`);
       return 1;
     }
+
+    if (stat.isFile()) {
+      const content = await fs.readFile(targetPath, 'utf8');
+      const res = parser.parse(content, targetPath);
+      if (res.valid) {
+        console.log(`[VALID] ${targetPath}`);
+        return 0;
+      } else {
+        console.error(
+          `[INVALID] ${targetPath}: ${res.errors?.join(', ') || 'Unknown validation error'}`
+        );
+        return 1;
+      }
+    }
   }
 
-  if (stat.isDirectory()) {
-    const errors: { path: string; error: unknown }[] = [];
-    const repo = new FileSystemRepository(targetPath);
-    const client = new Client({
-      repository: repo,
-      onError: (filePath, error) => {
-        errors.push({ path: filePath, error });
-      },
-    });
+  const errors: { path: string; error: unknown }[] = [];
+  const client = new Client({
+    repository: repo,
+    parser,
+    onError: (filePath, error) => {
+      resolvedConfig.onError?.(filePath, error);
+      errors.push({ path: filePath, error });
+    },
+  });
 
-    const concepts = await client.listAllConcepts();
+  const concepts = await client.listAllConcepts();
 
-    for (const c of concepts) {
-      console.log(
-        `[VALID] ${path.join(targetPath, c.filepath).replace(/\\/g, '/')}`
-      );
-    }
-    for (const e of errors) {
-      const msg = e.error instanceof Error ? e.error.message : String(e.error);
-      console.error(
-        `[INVALID] ${path.join(targetPath, e.path).replace(/\\/g, '/')}: ${msg}`
-      );
-    }
-
-    console.log(
-      `\nValidation complete: ${concepts.length} valid, ${errors.length} invalid.`
-    );
-    return errors.length > 0 ? 1 : 0;
+  for (const c of concepts) {
+    console.log(`[VALID] ${c.filepath}`);
+  }
+  for (const e of errors) {
+    const msg = e.error instanceof Error ? e.error.message : String(e.error);
+    console.error(`[INVALID] ${e.path}: ${msg}`);
   }
 
-  console.error(`Error: Path is neither a file nor a directory: ${targetPath}`);
-  return 1;
+  console.log(
+    `\nValidation complete: ${concepts.length} valid, ${errors.length} invalid.`
+  );
+  return errors.length > 0 ? 1 : 0;
 }
 
 async function handleIndex(targetPath: string): Promise<number> {
@@ -117,22 +122,23 @@ async function handleIndex(targetPath: string): Promise<number> {
   }
 }
 
-async function handleAttest(targetPath: string): Promise<number> {
-  let stat;
+async function handleAttest(
+  targetPath: string,
+  resolvedConfig: ResolvedOKFConfig
+): Promise<number> {
+  let content: string;
   try {
-    stat = await fs.stat(targetPath);
+    if (await resolvedConfig.repository.exists(targetPath)) {
+      content = await resolvedConfig.repository.readConcept(targetPath);
+    } else {
+      content = await fs.readFile(targetPath, 'utf8');
+    }
   } catch {
     console.error(`Error: File does not exist: ${targetPath}`);
     return 1;
   }
 
-  if (!stat.isFile()) {
-    console.error(`Error: Path is not a file: ${targetPath}`);
-    return 1;
-  }
-
-  const content = await fs.readFile(targetPath, 'utf8');
-  const parseRes = parseConceptContent(content, targetPath);
+  const parseRes = resolvedConfig.parser.parse(content, targetPath);
   if (!parseRes.valid || !parseRes.concept) {
     console.error(
       `Error: Invalid OKF document: ${parseRes.errors?.join(', ') || 'Unknown parsing error'}`
@@ -150,21 +156,34 @@ async function handleAttest(targetPath: string): Promise<number> {
   }
 }
 
-async function handleGraph(targetPath: string, json: boolean): Promise<number> {
-  let stat;
-  try {
-    stat = await fs.stat(targetPath);
-    if (!stat.isDirectory()) {
-      console.error(`Error: Path is not a directory: ${targetPath}`);
+async function handleGraph(
+  targetPath: string,
+  json: boolean,
+  resolvedConfig: ResolvedOKFConfig
+): Promise<number> {
+  const isFs =
+    'baseDir' in resolvedConfig.repository &&
+    typeof (resolvedConfig.repository as { baseDir: string }).baseDir ===
+      'string';
+
+  if (isFs) {
+    try {
+      const stat = await fs.stat(targetPath);
+      if (!stat.isDirectory()) {
+        console.error(`Error: Path is not a directory: ${targetPath}`);
+        return 1;
+      }
+    } catch {
+      console.error(`Error: Path does not exist: ${targetPath}`);
       return 1;
     }
-  } catch {
-    console.error(`Error: Path does not exist: ${targetPath}`);
-    return 1;
   }
 
-  const repo = new FileSystemRepository(targetPath);
-  const client = new Client({ repository: repo });
+  const client = new Client({
+    repository: resolvedConfig.repository,
+    parser: resolvedConfig.parser,
+    onError: resolvedConfig.onError,
+  });
   const graph = await client.buildGraph();
 
   if (json) {
@@ -196,6 +215,7 @@ export async function runCli(args: string[]): Promise<number> {
       options: {
         help: { type: 'boolean', short: 'h' },
         json: { type: 'boolean' },
+        config: { type: 'string', short: 'c' },
       },
       allowPositionals: true,
       strict: false,
@@ -216,21 +236,88 @@ export async function runCli(args: string[]): Promise<number> {
   }
 
   const command = positionals[0];
-  let targetPath = positionals[1] || '.';
-  targetPath = resolvePathFallback(targetPath);
+  const positionalPath = positionals[1];
+  const configPath =
+    typeof values.config === 'string' ? values.config : undefined;
 
-  switch (command) {
-    case 'validate':
-      return await handleValidate(targetPath);
-    case 'index':
-      return await handleIndex(targetPath);
-    case 'attest':
-      return await handleAttest(targetPath);
-    case 'graph':
-      return await handleGraph(targetPath, Boolean(values.json));
-    default:
-      console.error(`Unknown command: ${command}`);
-      printHelp();
-      return 1;
+  let resolvedConfig: ResolvedOKFConfig;
+  try {
+    resolvedConfig = await loadConfig({
+      configPath,
+      cwd: process.cwd(),
+      command,
+      targetPath: positionalPath
+        ? resolvePathFallback(positionalPath)
+        : undefined,
+    });
+  } catch (err: unknown) {
+    console.error(
+      `Error loading configuration: ${err instanceof Error ? err.message : String(err)}`
+    );
+    return 1;
   }
+
+  // Precedence: positional path overrides config roots for this invocation
+  // If no positional path is provided, operate over configured roots (or default to '.')
+  let targets: string[] = [];
+  if (positionalPath) {
+    targets = [resolvePathFallback(positionalPath)];
+  } else if (resolvedConfig.roots.length > 0) {
+    targets = resolvedConfig.roots.map((r) => r.resolvedPath);
+  } else {
+    targets = [resolvePathFallback('.')];
+  }
+
+  // Determine options with fallback to config commands
+  const jsonOutput =
+    Boolean(values.json) ||
+    Boolean(
+      resolvedConfig.commands?.graph &&
+      (resolvedConfig.commands.graph as { json?: boolean }).json
+    );
+
+  let overallExitCode = 0;
+
+  for (const targetPath of targets) {
+    // If multiple targets and repo is using default FileSystemRepository, create scoped config per target
+    let targetConfig = resolvedConfig;
+    if (
+      targets.length > 1 &&
+      'baseDir' in resolvedConfig.repository &&
+      typeof (resolvedConfig.repository as { baseDir: string }).baseDir ===
+        'string'
+    ) {
+      targetConfig = await loadConfig({
+        configPath,
+        cwd: process.cwd(),
+        command,
+        targetPath,
+      });
+    }
+
+    let code = 0;
+    switch (command) {
+      case 'validate':
+        code = await handleValidate(targetPath, targetConfig);
+        break;
+      case 'index':
+        code = await handleIndex(targetPath);
+        break;
+      case 'attest':
+        code = await handleAttest(targetPath, targetConfig);
+        break;
+      case 'graph':
+        code = await handleGraph(targetPath, jsonOutput, targetConfig);
+        break;
+      default:
+        console.error(`Unknown command: ${command}`);
+        printHelp();
+        return 1;
+    }
+    if (code !== 0) {
+      overallExitCode = code;
+    }
+  }
+
+  return overallExitCode;
 }
