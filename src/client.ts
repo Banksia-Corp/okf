@@ -1,4 +1,9 @@
-import { Concept } from './schema.js';
+import {
+  Concept,
+  Frontmatter,
+  FrontmatterSchema,
+  normalizeVerified,
+} from './schema.js';
 import { Parser, GrayMatterParser } from './parser.js';
 import { Repository, ConceptFilter } from './repository.js';
 import {
@@ -9,6 +14,19 @@ import {
   getNeighbors,
   filterConcepts,
 } from './graph.js';
+
+export interface CreateConceptOptions {
+  filepath: string;
+  title: string;
+  type?: string;
+  description?: string;
+  tags?: string[];
+  status?: 'active' | 'draft' | 'deprecated' | 'archived';
+  stale_after?: string;
+  resource?: string;
+  body?: string;
+  force?: boolean;
+}
 
 export interface Config {
   repository: Repository;
@@ -47,6 +65,70 @@ export class Client {
     const raw = this.parser.stringify(concept);
     await this.repository.writeConcept(concept.filepath, raw);
     this.clearCache();
+  }
+
+  async createConcept(options: CreateConceptOptions): Promise<Concept> {
+    const exists = await this.repository.exists(options.filepath);
+    if (exists && !options.force) {
+      throw new Error(`Concept file already exists: ${options.filepath}`);
+    }
+
+    const rawFrontmatter: Record<string, unknown> = {
+      type: options.type ?? 'concept',
+      title: options.title,
+    };
+
+    if (options.description !== undefined) {
+      rawFrontmatter.description = options.description;
+    }
+    if (options.tags !== undefined) {
+      rawFrontmatter.tags = options.tags;
+    }
+    if (options.status !== undefined) {
+      rawFrontmatter.status = options.status;
+    }
+    if (options.stale_after !== undefined) {
+      rawFrontmatter.stale_after = options.stale_after;
+    }
+    if (options.resource !== undefined) {
+      rawFrontmatter.resource = options.resource;
+    }
+
+    const validation = FrontmatterSchema.safeParse(rawFrontmatter);
+    if (!validation.success) {
+      const errMsgs = validation.error.issues.map(
+        (i) => `${i.path.join('.')}: ${i.message}`
+      );
+      throw new Error(
+        `Invalid OKF frontmatter for concept '${options.filepath}': ${errMsgs.join(', ')}`
+      );
+    }
+
+    const frontmatter: Frontmatter = { ...validation.data };
+    if (frontmatter.verified !== undefined) {
+      frontmatter.verified = normalizeVerified(frontmatter.verified);
+    }
+
+    const body =
+      options.body !== undefined
+        ? options.body
+        : `# ${options.title}\n\n${options.description || ''}`.trimEnd() + '\n';
+
+    const conceptId = options.filepath.endsWith('.md')
+      ? options.filepath.slice(0, -3)
+      : options.filepath;
+
+    const concept: Concept = {
+      id: conceptId,
+      filepath: options.filepath,
+      frontmatter,
+      body,
+    };
+
+    const raw = this.parser.stringify(concept);
+    await this.repository.writeConcept(options.filepath, raw);
+    this.clearCache();
+    return concept;
   }
 
   async listAllConcepts(subpath?: string): Promise<Concept[]> {
