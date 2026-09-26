@@ -20,6 +20,22 @@ pnpm add @banksia/okf
 
 ## Quick Start
 
+### CLI Usage
+
+```bash
+# Scaffold a new OKF concept document
+okf create docs/concepts/my-concept.md --title "My First Concept" --tags "core,arch"
+
+# Validate OKF frontmatter schema across files or directories
+okf validate ./docs
+
+# Generate or update directory index.md
+okf index ./docs/concepts
+
+# Generate dependency knowledge graph
+okf graph ./docs --json
+```
+
 ### Universal Core Usage
 
 ```typescript

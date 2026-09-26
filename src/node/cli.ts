@@ -2,6 +2,7 @@ import { parseArgs } from 'node:util';
 import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { Client } from '../client.js';
 import { writeDirectoryIndex } from './index.js';
 import { evaluateAttestedComputation } from '../attester.js';
@@ -34,13 +35,128 @@ export function printHelp(): void {
 Open Knowledge Format (OKF v0.2) CLI
 
 Usage:
-  okf validate [path]       Validate OKF frontmatter schema in a file or directory
-  okf index [dir]           Generate or update directory index.md
-  okf attest <file>         Evaluate Attested Computation concept
-  okf graph [dir] [--json]  Generate and display knowledge graph
-  okf --config, -c <path>   Path to configuration file
-  okf --help, -h            Show this help message
+  okf create <file> [options]  Create a new OKF concept document (alias: okf new)
+  okf validate [path]          Validate OKF frontmatter schema in a file or directory
+  okf index [dir]              Generate or update directory index.md
+  okf attest <file>            Evaluate Attested Computation concept
+  okf graph [dir] [--json]     Generate and display knowledge graph
+  okf --config, -c <path>      Path to configuration file
+  okf --help, -h               Show this help message
+
+Options for 'create':
+  --title, -t <title>          Concept title (required)
+  --type <type>                Concept type (default: 'concept')
+  --desc, -d <description>     Concept description
+  --tags <tag1,tag2>           Comma-separated tags
+  --status <status>            Status: active | draft | deprecated | archived (default: 'active')
+  --stale-after <YYYY-MM-DD>   Stale expiration date
+  --resource <uri>             Resource identifier or URI
+  --body <body>                Initial body markdown content
+  --force, -f                  Overwrite existing file
+  --actor <id>                 Actor identifier for audit log (default: human:$USER)
+  --no-log                     Skip appending creation to log.md
 `);
+}
+
+interface CreateFlags {
+  title?: string;
+  type?: string;
+  desc?: string;
+  tags?: string;
+  status?: string;
+  staleAfter?: string;
+  resource?: string;
+  body?: string;
+  force?: boolean;
+  actor?: string;
+  noLog?: boolean;
+}
+
+function resolveDefaultActor(): string {
+  try {
+    const user =
+      process.env.USER ||
+      process.env.USERNAME ||
+      os.userInfo().username ||
+      'unknown';
+    return `human:${user}`;
+  } catch {
+    return 'human:anonymous';
+  }
+}
+
+async function handleCreate(
+  targetPath: string,
+  flags: CreateFlags,
+  resolvedConfig: ResolvedOKFConfig
+): Promise<number> {
+  if (!flags.title || typeof flags.title !== 'string') {
+    console.error('Error: Missing required option --title, -t <title>');
+    printHelp();
+    return 1;
+  }
+
+  const client = new Client({
+    repository: resolvedConfig.repository,
+    parser: resolvedConfig.parser,
+    onError: resolvedConfig.onError,
+  });
+
+  const tags = flags.tags
+    ? flags.tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean)
+    : undefined;
+
+  const validStatuses = ['active', 'draft', 'deprecated', 'archived'] as const;
+  let status: (typeof validStatuses)[number] | undefined;
+  if (flags.status) {
+    if (
+      !validStatuses.includes(flags.status as (typeof validStatuses)[number])
+    ) {
+      console.error(
+        `Error: Invalid status '${flags.status}'. Must be one of: ${validStatuses.join(', ')}`
+      );
+      return 1;
+    }
+    status = flags.status as (typeof validStatuses)[number];
+  }
+
+  try {
+    await client.createConcept({
+      filepath: targetPath,
+      title: flags.title,
+      type: flags.type,
+      description: flags.desc,
+      tags,
+      status,
+      stale_after: flags.staleAfter,
+      resource: flags.resource,
+      body: flags.body,
+      force: Boolean(flags.force),
+    });
+
+    console.log(`[CREATED] ${targetPath}`);
+
+    if (!flags.noLog) {
+      const actor = flags.actor || resolveDefaultActor();
+      const targetBase = path.basename(targetPath);
+      await resolvedConfig.logger.append({
+        actor,
+        action: 'create',
+        target: targetBase,
+        summary: `Created concept "${flags.title}"`,
+      });
+    }
+
+    return 0;
+  } catch (err: unknown) {
+    console.error(
+      `Error creating concept: ${err instanceof Error ? err.message : String(err)}`
+    );
+    return 1;
+  }
 }
 
 async function handleValidate(
@@ -216,6 +332,17 @@ export async function runCli(args: string[]): Promise<number> {
         help: { type: 'boolean', short: 'h' },
         json: { type: 'boolean' },
         config: { type: 'string', short: 'c' },
+        title: { type: 'string', short: 't' },
+        type: { type: 'string' },
+        desc: { type: 'string', short: 'd' },
+        tags: { type: 'string' },
+        status: { type: 'string' },
+        'stale-after': { type: 'string' },
+        resource: { type: 'string' },
+        body: { type: 'string' },
+        force: { type: 'boolean', short: 'f' },
+        actor: { type: 'string' },
+        'no-log': { type: 'boolean' },
       },
       allowPositionals: true,
       strict: false,
@@ -246,15 +373,46 @@ export async function runCli(args: string[]): Promise<number> {
       configPath,
       cwd: process.cwd(),
       command,
-      targetPath: positionalPath
-        ? resolvePathFallback(positionalPath)
-        : undefined,
+      targetPath:
+        command === 'create' || command === 'new'
+          ? undefined
+          : positionalPath
+            ? resolvePathFallback(positionalPath)
+            : undefined,
     });
   } catch (err: unknown) {
     console.error(
       `Error loading configuration: ${err instanceof Error ? err.message : String(err)}`
     );
     return 1;
+  }
+
+  if (command === 'create' || command === 'new') {
+    if (!positionalPath) {
+      console.error(`Error: Missing file path for '${command}' command`);
+      printHelp();
+      return 1;
+    }
+
+    const createFlags: CreateFlags = {
+      title: typeof values.title === 'string' ? values.title : undefined,
+      type: typeof values.type === 'string' ? values.type : undefined,
+      desc: typeof values.desc === 'string' ? values.desc : undefined,
+      tags: typeof values.tags === 'string' ? values.tags : undefined,
+      status: typeof values.status === 'string' ? values.status : undefined,
+      staleAfter:
+        typeof values['stale-after'] === 'string'
+          ? values['stale-after']
+          : undefined,
+      resource:
+        typeof values.resource === 'string' ? values.resource : undefined,
+      body: typeof values.body === 'string' ? values.body : undefined,
+      force: Boolean(values.force),
+      actor: typeof values.actor === 'string' ? values.actor : undefined,
+      noLog: Boolean(values['no-log']),
+    };
+
+    return await handleCreate(positionalPath, createFlags, resolvedConfig);
   }
 
   // Precedence: positional path overrides config roots for this invocation
