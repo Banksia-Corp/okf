@@ -132,7 +132,12 @@ export class Client {
   }
 
   async listAllConcepts(subpath?: string): Promise<Concept[]> {
+    const visitedDirs = new Set<string>();
     const collect = async (dir?: string): Promise<string[]> => {
+      const normDir = dir || '';
+      if (visitedDirs.has(normDir)) return [];
+      visitedDirs.add(normDir);
+
       const direct = await this.repository.listConcepts(dir);
       const subdirs = this.repository.listSubdirectories
         ? await this.repository.listSubdirectories(dir)
@@ -166,6 +171,18 @@ export class Client {
     filter: ConceptFilter,
     subpath?: string
   ): Promise<Concept[]> {
+    if (
+      !subpath &&
+      'queryConcepts' in this.repository &&
+      typeof (this.repository as { queryConcepts?: unknown }).queryConcepts ===
+        'function'
+    ) {
+      return await (
+        this.repository as {
+          queryConcepts: (f: ConceptFilter) => Promise<Concept[]>;
+        }
+      ).queryConcepts(filter);
+    }
     const all = await this.listAllConcepts(subpath);
     return filterConcepts(all, filter);
   }

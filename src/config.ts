@@ -84,6 +84,32 @@ export const KnowledgeRootsSchema = z.union([
 
 export const OKFConfigSchema = z.object({
   roots: KnowledgeRootsSchema.optional(),
+  repository: z
+    .custom(
+      (val) =>
+        typeof val === 'function' || (typeof val === 'object' && val !== null),
+      { message: 'repository must be an object or factory function' }
+    )
+    .optional(),
+  logger: z
+    .custom(
+      (val) =>
+        typeof val === 'function' || (typeof val === 'object' && val !== null),
+      { message: 'logger must be an object or factory function' }
+    )
+    .optional(),
+  parser: z
+    .custom(
+      (val) =>
+        typeof val === 'function' || (typeof val === 'object' && val !== null),
+      { message: 'parser must be an object or factory function' }
+    )
+    .optional(),
+  onError: z
+    .custom((val) => typeof val === 'function', {
+      message: 'onError must be a function',
+    })
+    .optional(),
   commands: z
     .object({
       graph: z

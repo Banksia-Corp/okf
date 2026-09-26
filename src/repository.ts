@@ -1,9 +1,11 @@
 import { Concept } from './schema.js';
+import { parseConceptContent } from './parser.js';
+import { filterConcepts } from './graph.js';
 
 export interface ConceptFilter {
   type?: string | string[];
   tags?: string[];
-  status?: 'draft' | 'stable' | 'deprecated' | 'active' | 'archived';
+  status?: 'active' | 'draft' | 'deprecated' | 'archived';
   trustTier?: 'unverified' | 'machine-confirmed' | 'human-reviewed';
   stale?: boolean;
 }
@@ -18,7 +20,7 @@ export interface Repository {
 }
 
 export interface QueryableRepository extends Repository {
-  queryConcepts?(filter: ConceptFilter): Promise<Concept[]>;
+  queryConcepts(filter: ConceptFilter): Promise<Concept[]>;
 }
 
 export class InMemoryRepository implements QueryableRepository {
@@ -33,12 +35,25 @@ export class InMemoryRepository implements QueryableRepository {
   }
 
   private normalizePath(p: string): string {
-    return p
+    const clean = p
       .replace(/\\/g, '/')
       .replace(/^\.\/?/, '')
       .replace(/\/+/g, '/')
       .replace(/^\/+/, '')
       .replace(/\/+$/, '');
+    const parts = clean.split('/');
+    const safe: string[] = [];
+    for (const part of parts) {
+      if (part === '.' || part === '') continue;
+      if (part === '..') {
+        if (safe.length > 0 && safe[safe.length - 1] !== '..') {
+          safe.pop();
+        }
+      } else {
+        safe.push(part);
+      }
+    }
+    return safe.join('/');
   }
 
   async readConcept(path: string): Promise<string> {
@@ -98,5 +113,19 @@ export class InMemoryRepository implements QueryableRepository {
 
   async deleteConcept(path: string): Promise<void> {
     this.files.delete(this.normalizePath(path));
+  }
+
+  async queryConcepts(filter: ConceptFilter): Promise<Concept[]> {
+    const concepts: Concept[] = [];
+    for (const [key, content] of this.files.entries()) {
+      if (!key.endsWith('.md') || key === 'index.md' || key === 'log.md') {
+        continue;
+      }
+      const res = parseConceptContent(content, key);
+      if (res.valid && res.concept) {
+        concepts.push(res.concept);
+      }
+    }
+    return filterConcepts(concepts, filter);
   }
 }

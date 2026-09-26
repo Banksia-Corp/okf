@@ -4,6 +4,7 @@ import fsSync from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { Client } from '../client.js';
+import { ActorSchema } from '../schema.js';
 import { writeDirectoryIndex } from './index.js';
 import { evaluateAttestedComputation } from '../attester.js';
 import { loadConfig, ResolvedOKFConfig } from './config-loader.js';
@@ -74,12 +75,13 @@ interface CreateFlags {
 
 function resolveDefaultActor(): string {
   try {
-    const user =
+    const raw =
       process.env.USER ||
       process.env.USERNAME ||
       os.userInfo().username ||
       'unknown';
-    return `human:${user}`;
+    const sanitized = raw.replace(/[^a-zA-Z0-9_-]/g, '_') || 'anonymous';
+    return `human:${sanitized}`;
   } catch {
     return 'human:anonymous';
   }
@@ -141,6 +143,13 @@ async function handleCreate(
 
     if (!flags.noLog) {
       const actor = flags.actor || resolveDefaultActor();
+      const actorRes = ActorSchema.safeParse(actor);
+      if (!actorRes.success) {
+        console.error(
+          `Error: Invalid actor '${actor}'. Actor must follow <role>/<version>, human:<id>, or process:<id>`
+        );
+        return 1;
+      }
       const targetBase = path.basename(targetPath);
       await resolvedConfig.logger.append({
         actor,
@@ -244,11 +253,7 @@ async function handleAttest(
 ): Promise<number> {
   let content: string;
   try {
-    if (await resolvedConfig.repository.exists(targetPath)) {
-      content = await resolvedConfig.repository.readConcept(targetPath);
-    } else {
-      content = await fs.readFile(targetPath, 'utf8');
-    }
+    content = await resolvedConfig.repository.readConcept(targetPath);
   } catch {
     console.error(`Error: File does not exist: ${targetPath}`);
     return 1;
@@ -279,15 +284,25 @@ async function handleGraph(
 ): Promise<number> {
   const isFs =
     'baseDir' in resolvedConfig.repository &&
-    typeof (resolvedConfig.repository as { baseDir: string }).baseDir ===
-      'string';
+    typeof (resolvedConfig.repository as unknown as { baseDir: string })
+      .baseDir === 'string';
 
+  let subpath: string | undefined;
   if (isFs) {
     try {
       const stat = await fs.stat(targetPath);
       if (!stat.isDirectory()) {
         console.error(`Error: Path is not a directory: ${targetPath}`);
         return 1;
+      }
+      const repoBase = (
+        resolvedConfig.repository as unknown as { baseDir: string }
+      ).baseDir;
+      const rel = path
+        .relative(repoBase, path.resolve(targetPath))
+        .replace(/\\/g, '/');
+      if (rel && rel !== '.' && !rel.startsWith('..')) {
+        subpath = rel;
       }
     } catch {
       console.error(`Error: Path does not exist: ${targetPath}`);
@@ -300,7 +315,7 @@ async function handleGraph(
     parser: resolvedConfig.parser,
     onError: resolvedConfig.onError,
   });
-  const graph = await client.buildGraph();
+  const graph = await client.buildGraph(subpath);
 
   if (json) {
     console.log(JSON.stringify(graph, null, 2));

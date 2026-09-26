@@ -129,6 +129,17 @@ export async function loadConfig(
       } else {
         rawConfig = exported;
       }
+
+      const validated = OKFConfigSchema.safeParse(rawConfig);
+      if (!validated.success) {
+        const issues = validated.error.issues
+          .map((i) => `${i.path.join('.')}: ${i.message}`)
+          .join(', ');
+        throw new Error(
+          `Invalid configuration in ${resolvedConfigPath}: ${issues}`
+        );
+      }
+      rawConfig = validated.data;
     }
   }
 
