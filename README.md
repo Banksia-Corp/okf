@@ -70,6 +70,30 @@ pnpm run lint
 pnpm run format
 ```
 
+### Testing the CLI Locally
+
+To test the `okf` CLI locally across your system before the package is published to npm:
+
+1. **Link the package globally**:
+
+   ```bash
+   pnpm link --global
+   ```
+
+   _(Ensure pnpm's global bin directory is in your `$PATH`, e.g., `~/.local/share/pnpm`)._
+
+2. **Run `okf` directly from anywhere**:
+
+   ```bash
+   okf --help
+   okf validate ./docs
+   ```
+
+3. **Unlink when finished**:
+   ```bash
+   pnpm unlink --global @banksia/okf
+   ```
+
 ## Governance & Contributing
 
 - [AGENTS.md](./AGENTS.md) — Guidelines and rules for autonomous agents and AI pair programming.
