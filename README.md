@@ -9,8 +9,8 @@ The Open Knowledge Format (OKF) standardizes structured markdown documentation, 
 `@banksia/okf` delivers:
 
 - **Universal Decoupled Core (`@banksia/okf`)**: Minimal-dependency runtime-agnostic library compatible with Node.js, Cloudflare Workers, Edge environments, and browsers (utilizing `zod` for type-safe schema validation and `gray-matter` for frontmatter parsing).
-- **Dedicated Node.js Adapter (`@banksia/okf/node`)**: High-performance file system repository, path traversal and symlink escape defenses, atomic audit logging, and directory indexing.
-- **Standalone CLI (`okf`)**: Command-line tool for scaffolding concepts, validating knowledge bases, verifying attestation, generating directory indexes, and querying knowledge graphs.
+- **Dedicated Node.js Adapter (`@banksia/okf/node`)**: High-performance file system repository, path traversal protection, atomic audit logging, and directory indexing.
+- **Interactive CLI (`okf`)**: Interactive CLI tool for scaffolding concepts, validating knowledge bases, verifying attestation, generating directory indexes, and querying knowledge graphs.
 
 ## Installation
 
