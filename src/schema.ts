@@ -39,8 +39,8 @@ export const SourceSchema = z.object({
 });
 
 export const GeneratedSchema = z.object({
-  by: z.string(),
-  at: z.string(),
+  by: ActorSchema,
+  at: IsoDateTimeSchema,
 });
 
 export const TrustTierSchema = z.enum([
@@ -51,10 +51,21 @@ export const TrustTierSchema = z.enum([
 export type TrustTier = z.infer<typeof TrustTierSchema>;
 
 export const VerifiedEntrySchema = z.object({
-  by: z.string(),
-  at: z.string(),
+  by: ActorSchema,
+  at: IsoDateTimeSchema,
   tier: TrustTierSchema.optional(),
 });
+
+/**
+ * Sanitizes text for safe interpolation inside Markdown table cells and log entries.
+ * Escapes pipe characters (|) and converts carriage returns / newlines to single spaces.
+ */
+export function sanitizeMarkdownCell(text: string): string {
+  return text
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/\|/g, '\\|')
+    .trim();
+}
 
 export const NormalizedVerifiedSchema = z.union([
   VerifiedEntrySchema,

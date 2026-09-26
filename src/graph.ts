@@ -35,7 +35,14 @@ export function resolveRelativePosix(
   for (const part of targetParts) {
     if (part === '.' || part === '') continue;
     if (part === '..') {
-      fromDirParts.pop();
+      if (
+        fromDirParts.length > 0 &&
+        fromDirParts[fromDirParts.length - 1] !== '..'
+      ) {
+        fromDirParts.pop();
+      } else {
+        fromDirParts.push('..');
+      }
     } else {
       fromDirParts.push(part);
     }

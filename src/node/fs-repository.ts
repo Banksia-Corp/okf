@@ -1,6 +1,10 @@
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import path from 'node:path';
-import { QueryableRepository } from '../repository.js';
+import { Concept } from '../schema.js';
+import { parseConceptContent } from '../parser.js';
+import { filterConcepts } from '../graph.js';
+import { QueryableRepository, ConceptFilter } from '../repository.js';
 
 export class FileSystemRepository implements QueryableRepository {
   readonly baseDir: string;
@@ -21,6 +25,23 @@ export class FileSystemRepository implements QueryableRepository {
         `Access outside base directory is not permitted: ${subpath}`
       );
     }
+
+    // Verify realpath to guard against symlink path traversal
+    let check = full;
+    while (!fsSync.existsSync(check) && check !== path.dirname(check)) {
+      check = path.dirname(check);
+    }
+    if (fsSync.existsSync(check) && fsSync.existsSync(this.baseDir)) {
+      const realCheck = fsSync.realpathSync(check);
+      const realBase = fsSync.realpathSync(this.baseDir);
+      const realRel = path.relative(realBase, realCheck);
+      if (realRel.startsWith('..') || path.isAbsolute(realRel)) {
+        throw new Error(
+          `Access outside base directory via symlink is not permitted: ${subpath}`
+        );
+      }
+    }
+
     return full;
   }
 
@@ -104,5 +125,34 @@ export class FileSystemRepository implements QueryableRepository {
     } catch {
       // Ignored if file does not exist
     }
+  }
+
+  async queryConcepts(filter: ConceptFilter): Promise<Concept[]> {
+    const collect = async (dir: string = ''): Promise<string[]> => {
+      const direct = await this.listConcepts(dir);
+      const subdirs = await this.listSubdirectories(dir);
+      const all = [...direct];
+      for (const sub of subdirs) {
+        const nestedDir = dir ? `${dir}/${sub}` : sub;
+        const nested = await collect(nestedDir);
+        all.push(...nested);
+      }
+      return all;
+    };
+
+    const files = await collect('');
+    const concepts: Concept[] = [];
+    for (const f of files) {
+      try {
+        const content = await this.readConcept(f);
+        const res = parseConceptContent(content, f);
+        if (res.valid && res.concept) {
+          concepts.push(res.concept);
+        }
+      } catch {
+        // Skip unreadable files
+      }
+    }
+    return filterConcepts(concepts, filter);
   }
 }

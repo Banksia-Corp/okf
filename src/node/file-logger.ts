@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { AuditLogger, LogEntry } from '../logger.js';
+import { sanitizeMarkdownCell } from '../schema.js';
 
 export class NodeFileAuditLogger implements AuditLogger {
   readonly baseDir: string;
@@ -31,8 +32,14 @@ export class NodeFileAuditLogger implements AuditLogger {
     const logPath = path.join(this.baseDir, 'log.md');
     await this.ensureInitialized(logPath);
 
-    const timestamp = entry.timestamp || new Date().toISOString();
-    const newRow = `| ${timestamp} | \`${entry.actor}\` | ${entry.action} | [${entry.target}](./${entry.target}) | ${entry.summary} |\n`;
+    const timestamp = sanitizeMarkdownCell(
+      entry.timestamp || new Date().toISOString()
+    );
+    const actor = sanitizeMarkdownCell(entry.actor);
+    const action = sanitizeMarkdownCell(entry.action);
+    const target = sanitizeMarkdownCell(entry.target);
+    const summary = sanitizeMarkdownCell(entry.summary);
+    const newRow = `| ${timestamp} | \`${actor}\` | ${action} | [${target}](./${target}) | ${summary} |\n`;
 
     await fs.appendFile(logPath, newRow, 'utf8');
     return logPath.replace(/\\/g, '/');

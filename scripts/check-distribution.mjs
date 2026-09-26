@@ -130,22 +130,28 @@ function runAudit() {
     }
   }
 
-  // 2. Perform Tarball Packaging Audit (npm pack --dry-run)
+  // 2. Perform Tarball Packaging Audit (pnpm pack --dry-run)
   console.log('\n🔍 Auditing package tarball contents...');
   try {
-    const rawOutput = execSync('npm pack --dry-run --json', {
+    const rawOutput = execSync('pnpm pack --dry-run --json', {
       cwd: rootDir,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
 
     // Handle possible stdout prefix before JSON (e.g., hooks message)
-    const jsonStart = rawOutput.indexOf('[');
+    const indices = [rawOutput.indexOf('['), rawOutput.indexOf('{')].filter(
+      (i) => i !== -1
+    );
+    const jsonStart = indices.length > 0 ? Math.min(...indices) : -1;
     if (jsonStart === -1) {
-      throw new Error(`Unable to parse npm pack output as JSON: ${rawOutput}`);
+      throw new Error(`Unable to parse pack output as JSON: ${rawOutput}`);
     }
     const packJson = JSON.parse(rawOutput.slice(jsonStart));
-    const packagedFiles = packJson[0].files.map((f) => f.path);
+    const fileEntries = Array.isArray(packJson)
+      ? packJson[0].files
+      : packJson.files;
+    const packagedFiles = fileEntries.map((f) => f.path);
 
     for (const file of packagedFiles) {
       for (const pattern of FORBIDDEN_PATTERNS) {

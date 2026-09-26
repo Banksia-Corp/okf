@@ -50,6 +50,11 @@
     "vitest": "^5.0.2"
   },
   "packageManager": "pnpm@10.28.0",
+  "pnpm": {
+    "overrides": {
+      "tmp": ">=0.2.6"
+    }
+  },
   "publishConfig": {
     "access": "public",
     "provenance": true

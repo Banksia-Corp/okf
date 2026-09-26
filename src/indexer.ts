@@ -1,4 +1,4 @@
-import { Concept } from './schema.js';
+import { Concept, sanitizeMarkdownCell } from './schema.js';
 
 export interface IndexEntry {
   filename: string;
@@ -19,7 +19,8 @@ export function generateIndexMarkdown(options: {
   if (subdirs.length > 0) {
     markdown += '## Subdirectories\n\n';
     for (const sub of subdirs) {
-      markdown += `- [${sub}/](./${sub}/index.md)\n`;
+      const cleanSub = sanitizeMarkdownCell(sub);
+      markdown += `- [${cleanSub}/](./${cleanSub}/index.md)\n`;
     }
     markdown += '\n';
   }
@@ -29,12 +30,19 @@ export function generateIndexMarkdown(options: {
     markdown += '| Concept | Type | Description |\n';
     markdown += '| --- | --- | --- |\n';
     for (const c of concepts) {
-      const filename = c.filepath.includes('/')
+      const rawFilename = c.filepath.includes('/')
         ? c.filepath.split('/').pop()!
         : c.filepath;
-      const title = c.frontmatter.title || filename.replace('.md', '');
-      const desc = c.frontmatter.description || 'No description provided.';
-      markdown += `| [${title}](./${filename}) | \`${c.frontmatter.type}\` | ${desc} |\n`;
+      const rawTitle = c.frontmatter.title || rawFilename.replace('.md', '');
+      const rawDesc = c.frontmatter.description || 'No description provided.';
+      const rawType = c.frontmatter.type;
+
+      const title = sanitizeMarkdownCell(rawTitle);
+      const filename = sanitizeMarkdownCell(rawFilename);
+      const type = sanitizeMarkdownCell(rawType);
+      const desc = sanitizeMarkdownCell(rawDesc);
+
+      markdown += `| [${title}](./${filename}) | \`${type}\` | ${desc} |\n`;
     }
   }
 
