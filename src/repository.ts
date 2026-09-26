@@ -37,7 +37,7 @@ export class InMemoryRepository implements QueryableRepository {
   private normalizePath(p: string): string {
     const clean = p
       .replace(/\\/g, '/')
-      .replace(/^\.\/?/, '')
+      .replace(/^(\.\/)+/, '')
       .replace(/\/+/g, '/')
       .replace(/^\/+/, '')
       .replace(/\/+$/, '');
@@ -103,7 +103,12 @@ export class InMemoryRepository implements QueryableRepository {
       if (prefix && !key.startsWith(prefix)) continue;
       const relative = prefix ? key.slice(prefix.length) : key;
       const parts = relative.split('/');
-      if (parts.length > 1 && parts[0] && !parts[0].startsWith('.')) {
+      if (
+        parts.length > 1 &&
+        parts[0] &&
+        !parts[0].startsWith('.') &&
+        !key.startsWith('.')
+      ) {
         subdirs.add(parts[0]);
       }
     }
