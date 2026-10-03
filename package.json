@@ -36,9 +36,13 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "prepare": "lefthook install",
-    "okf": "tsx bin/okf.ts"
+    "okf": "tsx bin/okf.ts",
+    "changeset": "changeset",
+    "version": "changeset version"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^1.0.1",
+    "@changesets/cli": "^3.0.3",
     "@rslib/core": "^1.0.2",
     "@types/node": "^26.6.1",
     "eslint": "^10.11.0",
