@@ -73,4 +73,12 @@ describe('Distribution and Artifact Verification', () => {
     );
     expect(jsr.version).toBe(pkg.version);
   });
+
+  it('ensures package.json defines repository metadata for provenance', () => {
+    const pkg = JSON.parse(
+      fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8')
+    );
+    expect(pkg.repository).toBeDefined();
+    expect(pkg.repository.url).toBe('https://github.com/Banksia-Corp/okf');
+  });
 });

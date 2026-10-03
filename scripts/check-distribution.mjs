@@ -147,6 +147,26 @@ function runAudit() {
     }
   }
 
+  // Verify repository metadata in package.json for Sigstore provenance
+  if (fs.existsSync(pkgPath)) {
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+    if (!pkg.repository || !pkg.repository.url) {
+      console.error(
+        '❌ Missing repository.url in package.json (required for npm Sigstore provenance)'
+      );
+      hasFailure = true;
+    } else if (!pkg.repository.url.includes('Banksia-Corp/okf')) {
+      console.error(
+        `❌ Invalid repository.url in package.json: ${pkg.repository.url} (expected Banksia-Corp/okf)`
+      );
+      hasFailure = true;
+    } else {
+      console.log(
+        `  ✓ package.json repository metadata valid (${pkg.repository.url})`
+      );
+    }
+  }
+
   // 2. Perform Tarball Packaging Audit (pnpm pack --dry-run)
   console.log('\n🔍 Auditing package tarball contents...');
   try {

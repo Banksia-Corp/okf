@@ -2,6 +2,14 @@
   "name": "@banksia/okf",
   "version": "0.0.2",
   "description": "Open Knowledge Format (OKF v0.2) universal SDK and Node.js adapter",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Banksia-Corp/okf"
+  },
+  "homepage": "https://github.com/Banksia-Corp/okf#readme",
+  "bugs": {
+    "url": "https://github.com/Banksia-Corp/okf/issues"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
