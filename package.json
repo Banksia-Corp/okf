@@ -30,6 +30,7 @@
     "build:bundle": "rslib build",
     "build:schemas": "tsx scripts/generate-schemas.ts",
     "check:dist": "node scripts/check-distribution.mjs",
+    "check:jsr": "pnpm dlx jsr publish --dry-run",
     "dev": "rslib build --watch",
     "lint": "gts check",
     "fix": "gts fix",

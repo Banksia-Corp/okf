@@ -41,3 +41,6 @@ jobs:
 
       - name: Run test suite
         run: pnpm run test
+
+      - name: Check JSR package & fast types
+        run: pnpm run check:jsr

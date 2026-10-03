@@ -1,12 +1,42 @@
+/**
+ * @fileoverview Directory index generator for OKF knowledge roots and concept hierarchies.
+ *
+ * Synthesizes Markdown tables for `index.md` files displaying concept titles, types,
+ * descriptions, and nested subdirectory navigation links.
+ *
+ * @packageDocumentation
+ */
+
 import { Concept, sanitizeMarkdownCell } from './schema.js';
 
+/**
+ * Representation of an individual concept row rendered within a generated directory index table.
+ */
 export interface IndexEntry {
+  /** Relative filename of the concept markdown file. */
   filename: string;
+  /** Concept type (e.g. `'concept'`, `'architecture'`). */
   type: string;
+  /** Title of the concept. */
   title: string;
+  /** Summary description of the concept. */
   description: string;
 }
 
+/**
+ * Generates formatted `index.md` Markdown content containing navigation links and concept tables.
+ *
+ * @param options - Directory options containing subdirectories and concept documents.
+ * @returns Formatted Markdown string ready for writing to `index.md`.
+ *
+ * @example
+ * ```ts
+ * const markdown = generateIndexMarkdown({
+ *   subdirs: ['networking', 'storage'],
+ *   concepts: [conceptA, conceptB],
+ * });
+ * ```
+ */
 export function generateIndexMarkdown(options: {
   subdirs?: string[];
   concepts?: Concept[];

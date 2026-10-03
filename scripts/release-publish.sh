@@ -8,4 +8,4 @@ echo "Publishing to npm via Changesets..."
 pnpm changeset publish
 
 echo "Publishing to JSR..."
-npx jsr publish
+pnpm dlx jsr publish
