@@ -39,7 +39,7 @@
     "prepare": "lefthook install",
     "okf": "tsx bin/okf.ts",
     "changeset": "changeset",
-    "version": "changeset version"
+    "version": "changeset version && node scripts/sync-jsr-version.mjs"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^1.0.1",

@@ -68,6 +68,7 @@ const REQUIRED_FILES = [
   'README.md',
   'LICENSE',
   'package.json',
+  'jsr.json',
 ];
 
 const FORBIDDEN_PATTERNS = [
@@ -127,6 +128,22 @@ function runAudit() {
       hasFailure = true;
     } else {
       console.log(`  ✓ ${relPath}`);
+    }
+  }
+
+  // Verify jsr.json exists and its version matches package.json
+  const jsrPath = path.join(rootDir, 'jsr.json');
+  const pkgPath = path.join(rootDir, 'package.json');
+  if (fs.existsSync(jsrPath) && fs.existsSync(pkgPath)) {
+    const jsr = JSON.parse(fs.readFileSync(jsrPath, 'utf8'));
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+    if (jsr.version !== pkg.version) {
+      console.error(
+        `❌ Version mismatch: jsr.json (${jsr.version}) does not match package.json (${pkg.version})`
+      );
+      hasFailure = true;
+    } else {
+      console.log(`  ✓ jsr.json version matches package.json (${pkg.version})`);
     }
   }
 
