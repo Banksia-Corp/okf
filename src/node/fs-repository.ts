@@ -1,3 +1,12 @@
+/**
+ * @fileoverview Node.js local filesystem implementation of QueryableRepository with path traversal guards.
+ *
+ * Implements {@link QueryableRepository} using `node:fs/promises`, providing directory traversal,
+ * file reading/writing, and security controls preventing directory traversal and symlink escape.
+ *
+ * @packageDocumentation
+ */
+
 import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
 import path from 'node:path';
@@ -6,13 +15,39 @@ import { parseConceptContent } from '../parser.js';
 import { filterConcepts } from '../graph.js';
 import { QueryableRepository, ConceptFilter } from '../repository.js';
 
+/**
+ * Node.js filesystem repository backed by a designated root base directory.
+ *
+ * Enforces security boundaries:
+ * - Prevents access outside `baseDir` via relative path segments (`..`).
+ * - Resolves real filesystem paths to guard against symlink path traversal attacks.
+ */
 export class FileSystemRepository implements QueryableRepository {
+  /** Fully resolved absolute path to the root directory for this repository. */
   readonly baseDir: string;
 
+  /**
+   * Initializes a new FileSystemRepository anchored at `baseDir`.
+   *
+   * @param baseDir - Directory path to root all operations in.
+   *
+   * @example
+   * ```ts
+   * const repo = new FileSystemRepository('./docs/knowledge');
+   * const concepts = await repo.listConcepts();
+   * ```
+   */
   constructor(baseDir: string) {
     this.baseDir = path.resolve(baseDir);
   }
 
+  /**
+   * Normalizes and validates a target subpath against the repository's base directory.
+   *
+   * @param subpath - Target subpath to resolve.
+   * @returns Fully resolved filesystem path.
+   * @throws Error if subpath escapes `baseDir` or traverses a symlink outside `baseDir`.
+   */
   private resolvePath(subpath: string): string {
     const normalized = subpath
       .replace(/\\/g, '/')
@@ -45,11 +80,23 @@ export class FileSystemRepository implements QueryableRepository {
     return full;
   }
 
+  /**
+   * Reads raw UTF-8 string content of a concept file on disk.
+   *
+   * @param p - Relative path to the concept document.
+   * @returns Raw string contents.
+   */
   async readConcept(p: string): Promise<string> {
     const full = this.resolvePath(p);
     return await fs.readFile(full, 'utf8');
   }
 
+  /**
+   * Writes raw UTF-8 string content to disk, automatically creating parent directories.
+   *
+   * @param p - Relative path to write to.
+   * @param content - Document content string.
+   */
   async writeConcept(p: string, content: string): Promise<void> {
     const full = this.resolvePath(p);
     const dir = path.dirname(full);
@@ -57,6 +104,12 @@ export class FileSystemRepository implements QueryableRepository {
     await fs.writeFile(full, content, 'utf8');
   }
 
+  /**
+   * Checks whether a file exists on disk.
+   *
+   * @param p - Relative path to check.
+   * @returns `true` if accessible, `false` otherwise.
+   */
   async exists(p: string): Promise<boolean> {
     const full = this.resolvePath(p);
     try {
@@ -67,6 +120,13 @@ export class FileSystemRepository implements QueryableRepository {
     }
   }
 
+  /**
+   * Lists relative paths to concept documents within an optional subdirectory.
+   * Excludes `index.md` and `log.md`.
+   *
+   * @param subpath - Directory path to list within. Defaults to repository root.
+   * @returns Sorted array of relative concept file paths.
+   */
   async listConcepts(subpath: string = ''): Promise<string[]> {
     const targetDir = this.resolvePath(subpath);
     try {
@@ -100,6 +160,13 @@ export class FileSystemRepository implements QueryableRepository {
     }
   }
 
+  /**
+   * Lists child subdirectory names directly within `subpath`.
+   * Ignores hidden directories starting with `.`.
+   *
+   * @param subpath - Directory path to inspect.
+   * @returns Sorted array of child directory names.
+   */
   async listSubdirectories(subpath: string = ''): Promise<string[]> {
     const targetDir = this.resolvePath(subpath);
     try {
@@ -118,6 +185,11 @@ export class FileSystemRepository implements QueryableRepository {
     }
   }
 
+  /**
+   * Unlinks / deletes a concept file from disk if it exists.
+   *
+   * @param p - Relative path to delete.
+   */
   async deleteConcept(p: string): Promise<void> {
     const full = this.resolvePath(p);
     try {
@@ -127,6 +199,12 @@ export class FileSystemRepository implements QueryableRepository {
     }
   }
 
+  /**
+   * Recursively reads all markdown concepts on disk and filters them against {@link ConceptFilter}.
+   *
+   * @param filter - Concept criteria filter.
+   * @returns Filtered array of concepts.
+   */
   async queryConcepts(filter: ConceptFilter): Promise<Concept[]> {
     const collect = async (dir: string = ''): Promise<string[]> => {
       const direct = await this.listConcepts(dir);

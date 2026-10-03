@@ -1,21 +1,58 @@
+/**
+ * @fileoverview Universal knowledge graph construction, traversal, and dependency resolution.
+ *
+ * Implements directed graph modeling of OKF concepts, extracting cross-document markdown links,
+ * determining upstream/downstream dependencies, and executing multi-hop neighborhood queries.
+ *
+ * @packageDocumentation
+ */
+
 import { Concept, deriveTrustTier, isFresh } from './schema.js';
 import { ConceptFilter } from './repository.js';
 
+/**
+ * Directed edge connecting two concepts within a {@link KnowledgeGraph}.
+ */
 export interface GraphEdge {
+  /** Unique edge identifier formatted as `<sourceId>-><targetId>`. */
   id: string;
+  /** Concept ID of the originating document containing the markdown link. */
   source: string;
+  /** Concept ID of the targeted referenced document. */
   target: string;
+  /** Optional link text or anchor label from the markdown link syntax `[label](target.md)`. */
   label?: string;
 }
 
+/**
+ * OKF v0.2 Knowledge Graph containing indexed concept nodes and directed connection edges.
+ */
 export interface KnowledgeGraph {
+  /** Specification version indicator. */
   version: '0.2';
+  /** Array of concept nodes in the graph. */
   nodes: Concept[];
+  /** Array of directed edges representing references between concepts. */
   edges: GraphEdge[];
 }
 
 export type { ConceptFilter };
 
+/**
+ * Resolves a relative markdown link target against a source document's filepath using POSIX semantics.
+ *
+ * Automatically strips trailing `.md` extensions for canonical concept IDs.
+ *
+ * @param fromFile - Source document path (e.g. `'concepts/network/tcp.md'`).
+ * @param targetLink - Relative target link from markdown (e.g. `'../protocols/ip.md'`).
+ * @returns Resolved canonical concept ID (e.g. `'concepts/protocols/ip'`).
+ *
+ * @example
+ * ```ts
+ * resolveRelativePosix('guides/intro.md', './advanced.md');
+ * // 'guides/advanced'
+ * ```
+ */
 export function resolveRelativePosix(
   fromFile: string,
   targetLink: string
@@ -52,6 +89,20 @@ export function resolveRelativePosix(
   return resolved.endsWith('.md') ? resolved.slice(0, -3) : resolved;
 }
 
+/**
+ * Extracts all relative markdown links (`[label](path.md)`) from a document body string.
+ *
+ * Ignores images (`![]()`), external URLs (`http://`, `https://`), and email links (`mailto:`).
+ *
+ * @param body - The markdown body text.
+ * @returns Array of extracted `{ link, label }` records.
+ *
+ * @example
+ * ```ts
+ * extractMarkdownLinks('See [Architecture](./arch.md) and [RFC](https://ietf.org)');
+ * // [{ link: './arch.md', label: 'Architecture' }]
+ * ```
+ */
 export function extractMarkdownLinks(
   body: string
 ): { link: string; label: string }[] {
@@ -86,6 +137,18 @@ export function extractMarkdownLinks(
   return matches;
 }
 
+/**
+ * Constructs a {@link KnowledgeGraph} from an array of concept documents by parsing inter-document markdown links.
+ *
+ * @param concepts - Array of concept documents to index into the graph.
+ * @returns A fully constructed {@link KnowledgeGraph}.
+ *
+ * @example
+ * ```ts
+ * const graph = buildGraph([conceptA, conceptB]);
+ * console.log(`Graph contains ${graph.edges.length} edges`);
+ * ```
+ */
 export function buildGraph(concepts: Concept[]): KnowledgeGraph {
   const nodeMap = new Map<string, Concept>();
   for (const c of concepts) {
@@ -126,6 +189,13 @@ export function buildGraph(concepts: Concept[]): KnowledgeGraph {
   };
 }
 
+/**
+ * Retrieves all concepts that the given concept directly links to (outward dependencies).
+ *
+ * @param graph - The knowledge graph.
+ * @param conceptId - Originating concept ID.
+ * @returns Array of target {@link Concept} objects.
+ */
 export function getDependencies(
   graph: KnowledgeGraph,
   conceptId: string
@@ -139,6 +209,13 @@ export function getDependencies(
   return depIds.map((id) => nodeMap.get(id)!).filter(Boolean);
 }
 
+/**
+ * Retrieves all concepts that link directly to the given concept (inward dependents / consumers).
+ *
+ * @param graph - The knowledge graph.
+ * @param conceptId - Target concept ID.
+ * @returns Array of source {@link Concept} objects.
+ */
 export function getDependents(
   graph: KnowledgeGraph,
   conceptId: string
@@ -152,6 +229,19 @@ export function getDependents(
   return dependentIds.map((id) => nodeMap.get(id)!).filter(Boolean);
 }
 
+/**
+ * Retrieves neighboring concepts reachable from `conceptId` within a specified hop depth and direction.
+ *
+ * @param graph - The knowledge graph to traverse.
+ * @param conceptId - Starting root concept ID.
+ * @param options - Traversal options controlling search depth and direction (`both`, `outgoing`, `incoming`).
+ * @returns Array of reached neighbor {@link Concept} objects.
+ *
+ * @example
+ * ```ts
+ * const neighbors = getNeighbors(graph, 'core/architecture', { depth: 2, direction: 'outgoing' });
+ * ```
+ */
 export function getNeighbors(
   graph: KnowledgeGraph,
   conceptId: string,
@@ -196,6 +286,24 @@ export function getNeighbors(
     .filter(Boolean);
 }
 
+/**
+ * Filters an array of concepts based on matching criteria in {@link ConceptFilter}.
+ *
+ * Evaluates concept type, status, tags, trust tier derivation, and freshness expiration.
+ *
+ * @param concepts - Array of concepts to filter.
+ * @param filter - Criteria filter object.
+ * @returns Subset of concepts matching all specified criteria.
+ *
+ * @example
+ * ```ts
+ * const activeArchitectures = filterConcepts(concepts, {
+ *   type: 'architecture',
+ *   status: 'active',
+ *   stale: true,
+ * });
+ * ```
+ */
 export function filterConcepts(
   concepts: Concept[],
   filter: ConceptFilter

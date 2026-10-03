@@ -1,3 +1,16 @@
+/**
+ * @fileoverview Command-line interface runner for Open Knowledge Format (OKF v0.2) tools.
+ *
+ * Implements CLI commands:
+ * - `okf create` (alias: `new`): Scaffolds new concept documents with validated frontmatter.
+ * - `okf validate`: Validates schema conformance across concept documents.
+ * - `okf index`: Generates or updates navigation tables in `index.md`.
+ * - `okf attest`: Evaluates computational attestations.
+ * - `okf graph`: Renders the knowledge graph in terminal text or JSON formats.
+ *
+ * @packageDocumentation
+ */
+
 import { parseArgs } from 'node:util';
 import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
@@ -31,6 +44,9 @@ function resolvePathFallback(targetPath: string): string {
   return targetPath;
 }
 
+/**
+ * Prints the OKF CLI help message to standard output.
+ */
 export function printHelp(): void {
   console.log(`
 Open Knowledge Format (OKF v0.2) CLI
@@ -347,6 +363,19 @@ async function handleGraph(
   return 0;
 }
 
+/**
+ * Main command-line dispatcher for the `okf` CLI binary.
+ *
+ * Parses arguments and dispatches to appropriate handlers: `create`, `validate`, `index`, `attest`, `graph`.
+ *
+ * @param args - Command line arguments vector (excluding `node` and binary name, e.g. `process.argv.slice(2)`).
+ * @returns Exit code promise (0 for success, non-zero on failure).
+ *
+ * @example
+ * ```ts
+ * const exitCode = await runCli(['validate', './docs/concepts']);
+ * ```
+ */
 export async function runCli(args: string[]): Promise<number> {
   let parsed: ReturnType<typeof parseArgs>;
   try {

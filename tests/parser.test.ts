@@ -4,7 +4,7 @@ import {
   parseConceptContent,
   stringifyConcept,
 } from '../src/parser.js';
-import { Concept } from '../src/schema.js';
+import { Concept, Verified } from '../src/schema.js';
 
 describe('OKF Markdown Parser', () => {
   const parser = new GrayMatterParser();
@@ -66,7 +66,8 @@ Verified content.
     expect(res.valid).toBe(true);
     expect(Array.isArray(res.concept?.frontmatter.verified)).toBe(true);
     expect(res.concept?.frontmatter.verified).toHaveLength(1);
-    expect(res.concept?.frontmatter.verified?.[0].by).toBe('human:luis');
+    const verifiedList = res.concept?.frontmatter.verified as Verified[];
+    expect(verifiedList?.[0].by).toBe('human:luis');
   });
 
   it('returns valid: false with schema validation error details when schema is invalid', () => {

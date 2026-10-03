@@ -1,3 +1,12 @@
+/**
+ * @fileoverview Node.js configuration file discovery, loader, and resolver for OKF projects.
+ *
+ * Discovers configuration files (`okf.config.ts`, `.okfrc.json`, etc.) by traversing upwards
+ * from the working directory, and dynamically loads them using `jiti` with TypeScript transpilation support.
+ *
+ * @packageDocumentation
+ */
+
 import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
 import path from 'node:path';
@@ -15,7 +24,10 @@ import { AuditLogger } from '../logger.js';
 import { NodeFileAuditLogger } from './file-logger.js';
 import { Parser, GrayMatterParser } from '../parser.js';
 
-export const CONFIG_FILE_NAMES = [
+/**
+ * Standard filenames checked when searching for an OKF configuration file.
+ */
+export const CONFIG_FILE_NAMES: readonly string[] = [
   'okf.config.ts',
   'okf.config.mts',
   'okf.config.js',
@@ -28,6 +40,15 @@ export const CONFIG_FILE_NAMES = [
 /**
  * Searches upwards from `startDir` to monorepo root or filesystem root for an OKF config file.
  * Halts traversal when `.git` or `pnpm-workspace.yaml` is encountered.
+ *
+ * @param startDir - Starting directory to initiate the upwards search. Defaults to `process.cwd()`.
+ * @returns Absolute filesystem path to the discovered config file, or `null` if not found.
+ *
+ * @example
+ * ```ts
+ * const configPath = findConfigFile('/workspace/projects/knowledge');
+ * // '/workspace/projects/knowledge/okf.config.ts'
+ * ```
  */
 export function findConfigFile(startDir?: string): string | null {
   let current = path.resolve(startDir || process.cwd());
@@ -55,24 +76,60 @@ export function findConfigFile(startDir?: string): string | null {
   return null;
 }
 
+/**
+ * Options controlling configuration file loading and contextual resolution.
+ */
 export interface LoadConfigOptions {
+  /** Optional explicit filesystem path to configuration file. */
   configPath?: string;
+  /** Working directory context. Defaults to `process.cwd()`. */
   cwd?: string;
+  /** CLI command being invoked (e.g. `'create'`, `'validate'`). */
   command?: string;
+  /** Specific target file or directory path passed to the command. */
   targetPath?: string;
 }
 
+/**
+ * Fully resolved and instantiated OKF configuration object with ready-to-use services.
+ */
 export interface ResolvedOKFConfig {
+  /** Path to the resolved config file, or `undefined` if default fallback was used. */
   configPath?: string;
+  /** Raw validated OKF configuration object. */
   config: OKFConfig;
+  /** Normalized knowledge roots. */
   roots: NormalizedRoot[];
+  /** Concrete repository instance. Defaults to {@link FileSystemRepository}. */
   repository: Repository | QueryableRepository;
+  /** Concrete audit logger instance. Defaults to {@link NodeFileAuditLogger}. */
   logger: AuditLogger;
+  /** Concrete markdown frontmatter parser. Defaults to {@link GrayMatterParser}. */
   parser: Parser;
+  /** Optional error notification handler. */
   onError?: (path: string, error: unknown) => void;
+  /** Command-specific configuration options. */
   commands?: OKFConfig['commands'];
 }
 
+/**
+ * Loads and resolves the active OKF configuration for the project.
+ *
+ * Discovers config files via {@link findConfigFile} unless explicitly provided in `options.configPath`.
+ * Evaluates factory functions for `repository`, `logger`, and `parser` abstractions, falling back
+ * to standard Node.js implementations if unconfigured.
+ *
+ * @param options - Options controlling discovery and resolution context.
+ * @returns A promise resolving to the {@link ResolvedOKFConfig}.
+ * @throws Error if an explicit config file cannot be found or if schema validation fails.
+ *
+ * @example
+ * ```ts
+ * const resolved = await loadConfig({ cwd: process.cwd() });
+ * console.log(`Config loaded from ${resolved.configPath}`);
+ * const concepts = await resolved.repository.listConcepts();
+ * ```
+ */
 export async function loadConfig(
   options: LoadConfigOptions = {}
 ): Promise<ResolvedOKFConfig> {
