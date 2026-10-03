@@ -63,4 +63,14 @@ describe('Distribution and Artifact Verification', () => {
     // Mode should include executable bit (0o111)
     expect((stats.mode & 0o111) !== 0).toBe(true);
   });
+
+  it('ensures jsr.json and package.json versions are synchronized', () => {
+    const pkg = JSON.parse(
+      fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8')
+    );
+    const jsr = JSON.parse(
+      fs.readFileSync(path.join(rootDir, 'jsr.json'), 'utf8')
+    );
+    expect(jsr.version).toBe(pkg.version);
+  });
 });
