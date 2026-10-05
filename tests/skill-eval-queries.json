@@ -1,0 +1,106 @@
+{
+  "train": [
+    {
+      "query": "Scaffold a new OKF concept document for our caching layer in docs/concepts/caching.md",
+      "should_trigger": true,
+      "intent": "Explicit OKF concept creation"
+    },
+    {
+      "query": "Validate all frontmatter schemas across the docs directory to make sure our metadata is valid",
+      "should_trigger": true,
+      "intent": "Frontmatter metadata validation"
+    },
+    {
+      "query": "Can you generate a directory navigation index.md table for docs/concepts?",
+      "should_trigger": true,
+      "intent": "Directory index generation"
+    },
+    {
+      "query": "Analyze our concept dependencies and inspect the knowledge graph in JSON format",
+      "should_trigger": true,
+      "intent": "Knowledge graph analysis"
+    },
+    {
+      "query": "Help me set up an Attested Computation document that verifies our test benchmark",
+      "should_trigger": true,
+      "intent": "Computational attestation creation"
+    },
+    {
+      "query": "okf creat docs/concpets/test.md with title Test",
+      "should_trigger": true,
+      "intent": "Casual/typo prompt for okf CLI"
+    },
+    {
+      "query": "Format this markdown table with prettier",
+      "should_trigger": false,
+      "intent": "Generic markdown formatting"
+    },
+    {
+      "query": "Write a python script to parse a CSV sales dataset and plot a chart",
+      "should_trigger": false,
+      "intent": "CSV processing and analysis"
+    },
+    {
+      "query": "Configure a GitHub Actions workflow to run npm test on pull requests",
+      "should_trigger": false,
+      "intent": "CI/CD pipeline configuration"
+    },
+    {
+      "query": "How do I amend the most recent git commit message?",
+      "should_trigger": false,
+      "intent": "Git version control command"
+    },
+    {
+      "query": "Update CHANGELOG.md with the release notes for version 1.2.0",
+      "should_trigger": false,
+      "intent": "Standard changelog editing"
+    },
+    {
+      "query": "Fix the TypeScript type error TS2322 in src/utils/format.ts",
+      "should_trigger": false,
+      "intent": "General TypeScript debugging"
+    }
+  ],
+  "validation": [
+    {
+      "query": "Create a new architecture concept with status active and actor human:alex",
+      "should_trigger": true,
+      "intent": "Typed frontmatter concept scaffolding with status and actor"
+    },
+    {
+      "query": "Check if our docs have any invalid frontmatter statuses or broken actor formats",
+      "should_trigger": true,
+      "intent": "Frontmatter schema audit"
+    },
+    {
+      "query": "Run okf attest on our memory-benchmark.md concept",
+      "should_trigger": true,
+      "intent": "OKF computational attestation evaluation"
+    },
+    {
+      "query": "We need to structure our engineering documentation with typed frontmatter and bidirectional concept links",
+      "should_trigger": true,
+      "intent": "Implicit OKF knowledge graph structuring"
+    },
+    {
+      "query": "Can you convert this README from markdown to an HTML website?",
+      "should_trigger": false,
+      "intent": "HTML export / conversion"
+    },
+    {
+      "query": "Write unit tests for the user authentication controller",
+      "should_trigger": false,
+      "intent": "Unit test authoring"
+    },
+    {
+      "query": "Deploy our Docker container to Kubernetes cluster",
+      "should_trigger": false,
+      "intent": "Infrastructure deployment"
+    },
+    {
+      "query": "Optimize SQL queries for the PostgreSQL customer orders table",
+      "should_trigger": false,
+      "intent": "Database query optimization"
+    }
+  ]
+}

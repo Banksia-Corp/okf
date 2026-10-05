@@ -18,6 +18,7 @@ describe('Distribution and Artifact Verification', () => {
       'dist/okf-frontmatter.schema.json',
       'dist/index.d.ts',
       'dist/node/index.d.ts',
+      'skills/okf/SKILL.md',
     ];
 
     for (const relPath of required) {

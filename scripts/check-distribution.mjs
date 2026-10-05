@@ -65,6 +65,7 @@ const REQUIRED_FILES = [
   'dist/index.d.ts',
   'dist/node/index.d.ts',
   'bin/okf.js',
+  'skills/okf/SKILL.md',
   'README.md',
   'LICENSE',
   'package.json',

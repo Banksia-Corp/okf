@@ -31,7 +31,8 @@
   },
   "files": [
     "dist",
-    "bin"
+    "bin",
+    "skills"
   ],
   "scripts": {
     "build": "rslib build && tsx scripts/generate-schemas.ts && node scripts/check-distribution.mjs",
