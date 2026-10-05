@@ -1,5 +1,11 @@
 # @banksia/okf
 
+## 0.2.0
+
+### Minor Changes
+
+- [#34](https://github.com/Banksia-Corp/okf/pull/34) [`6955f61`](https://github.com/Banksia-Corp/okf/commit/6955f61d6f18d6c1eab67d33535e7afeb2ba4d1a) Thanks [@luismiddleton](https://github.com/luismiddleton)! - Add official Open Knowledge Format (OKF v0.2) agent skill and CLI installation subcommand (`okf skill install`).
+
 ## 0.1.0
 
 ### Minor Changes
