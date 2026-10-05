@@ -149,31 +149,31 @@ export function resolveTargetDir(options: InstallSkillOptions): string {
 
   // 2. Global installation flag
   if (options.global) {
+    if (agent === 'gemini' || agent === 'antigravity') {
+      return path.join(homedir, '.gemini', 'antigravity', 'skills', 'okf');
+    }
     if (agent === 'claude') {
       return path.join(homedir, '.claude', 'skills', 'okf');
     }
-    if (agent === 'generic') {
-      return path.join(homedir, '.agents', 'skills', 'okf');
-    }
-    // Default global preset: Gemini / Antigravity
-    return path.join(homedir, '.gemini', 'antigravity', 'skills', 'okf');
+    // Default global skills directory across agent ecosystems: ~/.agents/skills/okf
+    return path.join(homedir, '.agents', 'skills', 'okf');
   }
 
   // 3. Platform preset in project workspace
+  if (agent === 'gemini' || agent === 'antigravity') {
+    return path.resolve(cwd, '.gemini/skills/okf');
+  }
   if (agent === 'claude') {
     return path.resolve(cwd, '.claude/skills/okf');
   }
   if (agent === 'generic') {
     return path.resolve(cwd, '.agents/skills/okf');
   }
-  if (agent === 'gemini') {
-    return path.resolve(cwd, '.gemini/skills/okf');
-  }
 
   // 4. Auto-detect workspace skill directories
   const checkPaths = [
-    path.join(cwd, '.gemini', 'skills'),
     path.join(cwd, '.agents', 'skills'),
+    path.join(cwd, '.gemini', 'skills'),
     path.join(cwd, '.claude', 'skills'),
   ];
 
@@ -183,8 +183,8 @@ export function resolveTargetDir(options: InstallSkillOptions): string {
     }
   }
 
-  // Default fallback
-  return path.resolve(cwd, '.gemini/skills/okf');
+  // Default workspace fallback
+  return path.resolve(cwd, '.agents/skills/okf');
 }
 
 /**

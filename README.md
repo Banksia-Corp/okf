@@ -35,7 +35,7 @@ okf index ./docs/concepts
 # Generate dependency knowledge graph
 okf graph ./docs --json
 
-# Install official OKF Agent Skill into workspace (.gemini/skills/okf/)
+# Install official OKF Agent Skill into workspace (.agents/skills/okf/)
 okf skill install
 ```
 

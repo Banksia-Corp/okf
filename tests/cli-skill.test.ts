@@ -76,12 +76,11 @@ describe('Skill Installer and CLI Subcommand', () => {
       });
       expect(destClaude).toBe(path.join(homedir, '.claude/skills/okf'));
 
-      const destGeneric = resolveTargetDir({
+      const destDefault = resolveTargetDir({
         global: true,
-        agent: 'generic',
         cwd: tmpDir,
       });
-      expect(destGeneric).toBe(path.join(homedir, '.agents/skills/okf'));
+      expect(destDefault).toBe(path.join(homedir, '.agents/skills/okf'));
     });
 
     it('auto-detects existing .agents/skills directory in workspace', async () => {
@@ -90,9 +89,9 @@ describe('Skill Installer and CLI Subcommand', () => {
       expect(dest).toBe(path.join(tmpDir, '.agents/skills/okf'));
     });
 
-    it('falls back to .gemini/skills/okf if no existing skills folder found', () => {
+    it('falls back to .agents/skills/okf if no existing skills folder found', () => {
       const dest = resolveTargetDir({ cwd: tmpDir });
-      expect(dest).toBe(path.resolve(tmpDir, '.gemini/skills/okf'));
+      expect(dest).toBe(path.resolve(tmpDir, '.agents/skills/okf'));
     });
   });
 
