@@ -11,6 +11,9 @@ importers:
 
   .:
     dependencies:
+      citty:
+        specifier: 0.2.2
+        version: 0.2.2
       gray-matter:
         specifier: ^4.0.3
         version: 4.0.3
@@ -882,6 +885,9 @@ packages:
 
   chardet@0.7.0:
     resolution: {integrity: sha512-mT8iDcrh03qDGRRmoA2hmBJnxpllMR+0/0qlzjqZES6NdiWDcZkCNAk4rPFZ9Q85r27unkiNNg8ZOiwZXBHwcA==}
+
+  citty@0.2.2:
+    resolution: {integrity: sha512-+6vJA3L98yv+IdfKGZHBNiGW5KHn22e/JwID0Strsz8h4S/csAu/OuICwxrg44k5MRiZHWIo8XXuJgQTriRP4w==}
 
   cli-cursor@3.1.0:
     resolution: {integrity: sha512-I/zHAwsKf9FqGoXM4WWRACob9+SNukZTd94DWF57E4toouRulbCxcUh6RKUEOQlYTHJnzkPMySvPNaaSLNfLZw==}
@@ -2777,6 +2783,8 @@ snapshots:
       supports-color: 7.2.0
 
   chardet@0.7.0: {}
+
+  citty@0.2.2: {}
 
   cli-cursor@3.1.0:
     dependencies:

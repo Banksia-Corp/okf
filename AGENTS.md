@@ -26,3 +26,6 @@ Welcome to `@banksia/okf`! This file defines the repository conventions, quality
    - Always ensure `pnpm run lint` and `pnpm run format` succeed before completing a task.
    - Respect pre-commit verification configured in `lefthook.yml`.
    - Use Conventional Commits (`feat:`, `fix:`, `chore:`, `test:`, `docs:`).
+6. **Semantic Versioning & Changesets**:
+   - Create a changeset using `pnpm changeset` or by adding a `.changeset/<name>.md` file whenever making user-facing features, bug fixes, or structural refactors.
+   - Follow Semantic Versioning: `patch` for backwards-compatible bug fixes, `minor` for new functionality or backwards-compatible refactors, and `major` for breaking API changes.
