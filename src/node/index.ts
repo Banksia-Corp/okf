@@ -16,3 +16,4 @@ export * from './file-logger.js';
 export * from './directory-index.js';
 export * from './cli.js';
 export * from './config-loader.js';
+export * from './skill-installer.js';
