@@ -109,7 +109,7 @@ okf skill install [targetDir] [options]
 **Options:**
 
 - `--dest, -d <path>`: Custom destination path.
-- `--agent <platform>`: Platform target preset (`gemini`, `claude`, `generic`).
+- `--agent <platform>`: Platform target preset (`antigravity`, `gemini`, `claude`, `generic`).
 - `--force, -f`: Overwrite existing skill files.
 - `--global, -g`: Install into user global skills directory.
 - `--dry-run`: Preview destination path and files without writing.

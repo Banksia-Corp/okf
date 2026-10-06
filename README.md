@@ -37,6 +37,12 @@ okf graph ./docs --json
 
 # Install official OKF Agent Skill into workspace (.agents/skills/okf/)
 okf skill install
+
+# Target specific agent preset in workspace (.agents/skills/okf/ or .claude/skills/okf/)
+okf skill install --agent antigravity
+
+# Install globally for Antigravity CLI (~/.gemini/config/skills/okf/)
+okf skill install --global --agent antigravity
 ```
 
 ### Universal Core Usage
