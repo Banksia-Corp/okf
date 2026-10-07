@@ -29,7 +29,8 @@ export const skillCommand = defineCommand({
     },
     agent: {
       type: 'string',
-      description: 'Target agent platform preset (gemini, claude, generic)',
+      description:
+        'Target agent platform preset (antigravity, gemini, claude, generic)',
     },
     force: {
       type: 'boolean',

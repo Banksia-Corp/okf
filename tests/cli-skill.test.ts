@@ -58,16 +58,37 @@ describe('Skill Installer and CLI Subcommand', () => {
       expect(dest).toBe(path.resolve(tmpDir, '.agents/skills/okf'));
     });
 
+    it('resolves antigravity and gemini agent presets to .agents/skills/okf in workspace', () => {
+      const destAntigravity = resolveTargetDir({
+        agent: 'antigravity',
+        cwd: tmpDir,
+      });
+      expect(destAntigravity).toBe(path.resolve(tmpDir, '.agents/skills/okf'));
+
+      const destGemini = resolveTargetDir({
+        agent: 'gemini',
+        cwd: tmpDir,
+      });
+      expect(destGemini).toBe(path.resolve(tmpDir, '.agents/skills/okf'));
+    });
+
     it('resolves global destination when --global flag is passed', () => {
       const homedir = os.homedir();
+      const destAntigravity = resolveTargetDir({
+        global: true,
+        agent: 'antigravity',
+        cwd: tmpDir,
+      });
+      expect(destAntigravity).toBe(
+        path.join(homedir, '.gemini/config/skills/okf')
+      );
+
       const destGemini = resolveTargetDir({
         global: true,
         agent: 'gemini',
         cwd: tmpDir,
       });
-      expect(destGemini).toBe(
-        path.join(homedir, '.gemini/antigravity/skills/okf')
-      );
+      expect(destGemini).toBe(path.join(homedir, '.gemini/config/skills/okf'));
 
       const destClaude = resolveTargetDir({
         global: true,
@@ -75,12 +96,44 @@ describe('Skill Installer and CLI Subcommand', () => {
         cwd: tmpDir,
       });
       expect(destClaude).toBe(path.join(homedir, '.claude/skills/okf'));
+    });
 
-      const destDefault = resolveTargetDir({
+    it('resolves global destination auto-detecting ~/.gemini/config/skills if present', () => {
+      const homedir = os.homedir();
+      const existsSpy = vi.spyOn(fsSync, 'existsSync');
+      existsSpy.mockImplementation((p) => {
+        if (p === path.join(homedir, '.gemini', 'config', 'skills')) {
+          return true;
+        }
+        return false;
+      });
+
+      const dest = resolveTargetDir({
         global: true,
         cwd: tmpDir,
       });
-      expect(destDefault).toBe(path.join(homedir, '.agents/skills/okf'));
+      expect(dest).toBe(path.join(homedir, '.gemini/config/skills/okf'));
+
+      existsSpy.mockRestore();
+    });
+
+    it('falls back to ~/.agents/skills/okf for global if ~/.gemini/config/skills does not exist', () => {
+      const homedir = os.homedir();
+      const existsSpy = vi.spyOn(fsSync, 'existsSync');
+      existsSpy.mockImplementation((p) => {
+        if (p === path.join(homedir, '.gemini', 'config', 'skills')) {
+          return false;
+        }
+        return false;
+      });
+
+      const dest = resolveTargetDir({
+        global: true,
+        cwd: tmpDir,
+      });
+      expect(dest).toBe(path.join(homedir, '.agents/skills/okf'));
+
+      existsSpy.mockRestore();
     });
 
     it('auto-detects existing .agents/skills directory in workspace', async () => {

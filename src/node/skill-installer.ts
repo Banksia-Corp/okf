@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 /**
  * Supported agent platforms for skill presets.
  */
-export type AgentPlatform = 'gemini' | 'claude' | 'generic';
+export type AgentPlatform = 'antigravity' | 'gemini' | 'claude' | 'generic';
 
 /**
  * Options passed to {@link installSkill}.
@@ -150,30 +150,29 @@ export function resolveTargetDir(options: InstallSkillOptions): string {
   // 2. Global installation flag
   if (options.global) {
     if (agent === 'gemini' || agent === 'antigravity') {
-      return path.join(homedir, '.gemini', 'antigravity', 'skills', 'okf');
+      return path.join(homedir, '.gemini', 'config', 'skills', 'okf');
     }
     if (agent === 'claude') {
       return path.join(homedir, '.claude', 'skills', 'okf');
     }
-    // Default global skills directory across agent ecosystems: ~/.agents/skills/okf
+    // Auto-detect existing global config roots
+    if (fsSync.existsSync(path.join(homedir, '.gemini', 'config', 'skills'))) {
+      return path.join(homedir, '.gemini', 'config', 'skills', 'okf');
+    }
     return path.join(homedir, '.agents', 'skills', 'okf');
   }
 
   // 3. Platform preset in project workspace
-  if (agent === 'gemini' || agent === 'antigravity') {
-    return path.resolve(cwd, '.gemini/skills/okf');
+  if (agent === 'gemini' || agent === 'antigravity' || agent === 'generic') {
+    return path.resolve(cwd, '.agents/skills/okf');
   }
   if (agent === 'claude') {
     return path.resolve(cwd, '.claude/skills/okf');
-  }
-  if (agent === 'generic') {
-    return path.resolve(cwd, '.agents/skills/okf');
   }
 
   // 4. Auto-detect workspace skill directories
   const checkPaths = [
     path.join(cwd, '.agents', 'skills'),
-    path.join(cwd, '.gemini', 'skills'),
     path.join(cwd, '.claude', 'skills'),
   ];
 

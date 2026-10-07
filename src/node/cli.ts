@@ -70,7 +70,7 @@ Options for 'create':
 
 Options for 'skill':
   --dest, -d <path>            Custom destination path
-  --agent <platform>           Target agent platform preset: gemini | claude | generic
+  --agent <platform>           Target agent platform preset: antigravity | gemini | claude | generic
   --force, -f                  Overwrite existing skill files
   --global, -g                 Install into user global skills directory
   --dry-run                    Preview files to be installed without copying
