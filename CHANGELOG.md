@@ -1,5 +1,11 @@
 # @banksia/okf
 
+## 0.2.1
+
+### Patch Changes
+
+- [#37](https://github.com/Banksia-Corp/okf/pull/37) [`6a18d2c`](https://github.com/Banksia-Corp/okf/commit/6a18d2c521776f70664c1799da32df2fd4b2c25a) Thanks [@luismiddleton](https://github.com/luismiddleton)! - Resolve Antigravity CLI skill installation paths (`.agents/skills/okf` in workspace scope, `~/.gemini/config/skills/okf` in global scope) and expand `AgentPlatform` type with `antigravity`.
+
 ## 0.2.0
 
 ### Minor Changes
