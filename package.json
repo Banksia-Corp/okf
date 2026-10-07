@@ -1,6 +1,6 @@
 {
   "name": "@banksia/okf",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Open Knowledge Format (OKF v0.2) universal SDK and Node.js adapter",
   "repository": {
     "type": "git",
