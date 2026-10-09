@@ -17,16 +17,15 @@
   "bin": {
     "okf": "./bin/okf.js"
   },
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.js"
     },
     "./node": {
       "types": "./dist/node/index.d.ts",
-      "import": "./dist/node/index.js",
-      "require": "./dist/node/index.cjs"
+      "import": "./dist/node/index.js"
     }
   },
   "files": [
@@ -74,8 +73,8 @@
     "provenance": true
   },
   "dependencies": {
+    "@11ty/gray-matter": "^3.0.0",
     "citty": "0.2.2",
-    "gray-matter": "^4.0.3",
     "jiti": "^2.7.0",
     "zod": "^4.6.5"
   }

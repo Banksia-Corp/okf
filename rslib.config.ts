@@ -14,16 +14,5 @@ export default defineConfig({
         tsconfigPath: './tsconfig.build.json',
       },
     },
-    {
-      format: 'cjs',
-      syntax: ['node 24'],
-      dts: false,
-      source: {
-        entry: {
-          index: './src/index.ts',
-          'node/index': './src/node/index.ts',
-        },
-      },
-    },
   ],
 });

@@ -10,7 +10,6 @@
 import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
 import path from 'node:path';
-import { createJiti } from 'jiti';
 import {
   OKFConfig,
   OKFConfigSchema,
@@ -174,6 +173,7 @@ export async function loadConfig(
       rawConfig = validated.data;
     } else {
       // TypeScript or JavaScript config loaded via jiti
+      const { createJiti } = await import('jiti');
       const jiti = createJiti(import.meta.url, {
         interopDefault: true,
       });

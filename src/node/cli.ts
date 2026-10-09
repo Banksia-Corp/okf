@@ -12,13 +12,6 @@
  */
 
 import { defineCommand, runCommand } from 'citty';
-import { createCommand } from './commands/create.js';
-import { validateCommand } from './commands/validate.js';
-import { indexCommand } from './commands/index.js';
-import { attestCommand } from './commands/attest.js';
-import { graphCommand } from './commands/graph.js';
-import { skillCommand } from './commands/skill.js';
-
 import { resetCliExitCode, getCliExitCode } from './commands/common.js';
 
 const mainCommand = defineCommand({
@@ -28,13 +21,14 @@ const mainCommand = defineCommand({
     description: 'Open Knowledge Format (OKF v0.2) CLI',
   },
   subCommands: {
-    create: createCommand,
-    new: createCommand,
-    validate: validateCommand,
-    index: indexCommand,
-    attest: attestCommand,
-    graph: graphCommand,
-    skill: skillCommand,
+    create: () => import('./commands/create.js').then((m) => m.createCommand),
+    new: () => import('./commands/create.js').then((m) => m.createCommand),
+    validate: () =>
+      import('./commands/validate.js').then((m) => m.validateCommand),
+    index: () => import('./commands/index.js').then((m) => m.indexCommand),
+    attest: () => import('./commands/attest.js').then((m) => m.attestCommand),
+    graph: () => import('./commands/graph.js').then((m) => m.graphCommand),
+    skill: () => import('./commands/skill.js').then((m) => m.skillCommand),
   },
 });
 
