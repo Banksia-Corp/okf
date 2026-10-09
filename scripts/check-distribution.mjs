@@ -33,33 +33,17 @@ const BUDGETS = [
     description: 'Universal decoupled core entrypoint (ESM)',
   },
   {
-    name: '@banksia/okf (Universal Core CJS)',
-    files: ['dist/index.cjs'],
-    maxGzipBytes: 15000,
-    maxBrotliBytes: 13000,
-    description: 'Universal decoupled core entrypoint (CJS)',
-  },
-  {
     name: '@banksia/okf/node (Node Adapter ESM)',
     files: ['dist/node/index.js'],
     maxGzipBytes: 12000,
     maxBrotliBytes: 10000,
     description: 'Node.js filesystem & CLI adapter (ESM)',
   },
-  {
-    name: '@banksia/okf/node (Node Adapter CJS)',
-    files: ['dist/node/index.cjs'],
-    maxGzipBytes: 20000,
-    maxBrotliBytes: 18000,
-    description: 'Node.js filesystem & CLI adapter (CJS)',
-  },
 ];
 
 const REQUIRED_FILES = [
   'dist/index.js',
-  'dist/index.cjs',
   'dist/node/index.js',
-  'dist/node/index.cjs',
   'dist/okf.schema.json',
   'dist/okf-frontmatter.schema.json',
   'dist/index.d.ts',

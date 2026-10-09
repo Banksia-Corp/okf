@@ -11,9 +11,7 @@ describe('Distribution and Artifact Verification', () => {
   it('generates all expected build outputs in dist/', () => {
     const required = [
       'dist/index.js',
-      'dist/index.cjs',
       'dist/node/index.js',
-      'dist/node/index.cjs',
       'dist/okf.schema.json',
       'dist/okf-frontmatter.schema.json',
       'dist/index.d.ts',

@@ -2,12 +2,12 @@
  * @fileoverview Universal Markdown frontmatter parser and serializer for OKF concept documents.
  *
  * Implements parsing and serialization between raw markdown files (with YAML frontmatter)
- * and typed {@link Concept} objects using `gray-matter`.
+ * and typed {@link Concept} objects using `@11ty/gray-matter`.
  *
  * @packageDocumentation
  */
 
-import matter from 'gray-matter';
+import matter from '@11ty/gray-matter';
 import { Concept, FrontmatterSchema, normalizeVerified } from './schema.js';
 
 /**
@@ -45,7 +45,7 @@ export interface Parser {
 }
 
 /**
- * Default implementation of {@link Parser} utilizing `gray-matter` for YAML parsing and serialization.
+ * Default implementation of {@link Parser} utilizing `@11ty/gray-matter` for edge-compatible YAML parsing and serialization.
  */
 export class GrayMatterParser implements Parser {
   /**
